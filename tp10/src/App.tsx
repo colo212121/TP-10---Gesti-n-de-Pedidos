@@ -1,9 +1,14 @@
 import { useEffect, useMemo, useState } from 'react'
+import { BrowserRouter as Router, Routes, Route, Link, Navigate, useLocation } from 'react-router-dom'
 import './App.css'
-import OrderList, { Order } from './components/OrderList'
-import OrderFilter from './components/OrderFilter'
-import OrderStats from './components/OrderStats'
-import NewOrderForm from './components/NewOrderForm'
+import HomePage from './pages/HomePage'
+import NewOrderPage from './pages/NewOrderPage'
+import StatsPage from './pages/StatsPage'
+import { Order } from './components/OrderList'
+
+// Si tu app se sirve desde una subcarpeta (como en tu caso),
+// Vite expone import.meta.env.BASE_URL automáticamente.
+const basename = import.meta.env.BASE_URL || '/'
 
 const initialOrders: Order[] = [
   {
@@ -35,20 +40,20 @@ const initialOrders: Order[] = [
   },
 ]
 
-const App: React.FC = () => {
+const AppContent: React.FC = () => {
   const [orders, setOrders] = useState<Order[]>(() => {
     try {
       const raw = localStorage.getItem('orders')
       if (!raw) return initialOrders
       const parsed = JSON.parse(raw)
       return parsed.map((o: Order) => ({ ...o, date: new Date(o.date) }))
-    } catch (e) {
+    } catch {
       return initialOrders
     }
   })
 
   const [filter, setFilter] = useState<Order['status'] | undefined>()
-  const [isFormOpen, setIsFormOpen] = useState(false)
+  const location = useLocation()
 
   const filteredOrders = useMemo(() => {
     if (!filter) return orders
@@ -66,13 +71,7 @@ const App: React.FC = () => {
   function handleAddOrder(orderData: Omit<Order, 'id'>) {
     setOrders((prev) => {
       const nextId = prev.length ? Math.max(...prev.map((o) => o.id)) + 1 : 1
-      return [
-        ...prev,
-        {
-          id: nextId,
-          ...orderData,
-        },
-      ]
+      return [...prev, { id: nextId, ...orderData }]
     })
   }
 
@@ -80,65 +79,32 @@ const App: React.FC = () => {
     localStorage.setItem('orders', JSON.stringify(orders))
   }, [orders])
 
-  useEffect(() => {
-    // Bloquear scroll del fondo cuando está abierto el panel
-    if (isFormOpen) {
-      document.body.style.overflow = 'hidden'
-    } else {
-      document.body.style.overflow = ''
-    }
-    return () => {
-      document.body.style.overflow = ''
-    }
-  }, [isFormOpen])
-
   return (
-    <div className="dashboard">
-      <h1>Gestión de Pedidos</h1>
-      <div className="top-bar">
-        <OrderFilter filter={filter} onChange={setFilter} />
-        <OrderStats {...stats} />
-      </div>
+    <>
+      <nav className="navbar">
+        <Link to="/" className={location.pathname === '/' ? 'active' : ''}>Home</Link>
+        <Link to="/nuevo" className={location.pathname === '/nuevo' ? 'active' : ''}>Nuevo Pedido</Link>
+        <Link to="/estadisticas" className={location.pathname === '/estadisticas' ? 'active' : ''}>Estadísticas</Link>
+      </nav>
 
-      {/* Botón móvil */}
-      <button
-        className="mobile-add-button"
-        onClick={() => setIsFormOpen(true)}
-        disabled={isFormOpen}
-      >
-        Nuevo pedido
-      </button>
+      <Routes>
+        <Route
+          path="/"
+          element={<HomePage orders={filteredOrders} filter={filter} setFilter={setFilter} stats={stats} />}
+        />
+        <Route path="/nuevo" element={<NewOrderPage onAddOrder={handleAddOrder} />} />
+        <Route path="/estadisticas" element={<StatsPage stats={stats} />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </>
+  )
+}
 
-      <div className="layout">
-        <div className="column left">
-          <OrderList orders={filteredOrders} />
-        </div>
-        <div className="column right mobile-hidden">
-          {!isFormOpen && <NewOrderForm onAdd={handleAddOrder} />}
-        </div>
-      </div>
-
-      {isFormOpen && (
-        <div className="sheet-overlay" onClick={() => setIsFormOpen(false)}>
-          <div className="sheet" onClick={(e) => e.stopPropagation()}>
-            <div className="sheet-header">
-              <h3>Nuevo Pedido</h3>
-              <button className="close" onClick={() => setIsFormOpen(false)}>
-                Cerrar
-              </button>
-            </div>
-            <div className="sheet-content">
-              <NewOrderForm
-                onAdd={(data) => {
-                  handleAddOrder(data)
-                  setIsFormOpen(false)
-                }}
-              />
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
+const App: React.FC = () => {
+  return (
+    <Router basename={basename}>
+      <AppContent />
+    </Router>
   )
 }
 

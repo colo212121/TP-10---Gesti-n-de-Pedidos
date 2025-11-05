@@ -1,17 +1,41 @@
-import PropTypes from 'prop-types'
-import { useState } from 'react'
+import React, { useState } from 'react'
 
-const statusValues = ['pending', 'shipped', 'delivered']
+type OrderItem = {
+	productId: number
+	name: string
+	quantity: number
+	price: number
+}
 
-function NewOrderForm({ onAdd }) {
-	const [customer, setCustomer] = useState('')
-	const [status, setStatus] = useState('pending')
-	const [items, setItems] = useState([{ productId: 1, name: '', quantity: 1, price: 0 }])
+type Order = {
+	customer: string
+	status: string
+	items: OrderItem[]
+	date: Date
+}
 
-	const orderTotal = items.reduce((sum, it) => sum + Number(it.quantity || 0) * Number(it.price || 0), 0)
+type NewOrderFormProps = {
+	onAdd: (order: Order) => void
+}
 
-	function updateItem(index, field, value) {
-		setItems((prev) => prev.map((it, i) => (i === index ? { ...it, [field]: value } : it)))
+const statusValues = ['pending', 'shipped', 'delivered'] as const
+
+const NewOrderForm: React.FC<NewOrderFormProps> = ({ onAdd }) => {
+	const [customer, setCustomer] = useState<string>('')
+	const [status, setStatus] = useState<(typeof statusValues)[number]>('pending')
+	const [items, setItems] = useState<OrderItem[]>([
+		{ productId: 1, name: '', quantity: 1, price: 0 },
+	])
+
+	const orderTotal = items.reduce(
+		(sum, it) => sum + Number(it.quantity || 0) * Number(it.price || 0),
+		0
+	)
+
+	function updateItem(index: number, field: keyof OrderItem, value: string | number) {
+		setItems((prev) =>
+			prev.map((it, i) => (i === index ? { ...it, [field]: value } : it))
+		)
 	}
 
 	function addItemRow() {
@@ -21,13 +45,14 @@ function NewOrderForm({ onAdd }) {
 		])
 	}
 
-	function removeItemRow(index) {
+	function removeItemRow(index: number) {
 		setItems((prev) => prev.filter((_, i) => i !== index))
 	}
 
-	function handleSubmit(e) {
+	function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
 		e.preventDefault()
-		// Validaciones de negocio mínimas
+
+		// Validaciones básicas
 		if (customer.trim().length < 3) {
 			alert('El nombre del cliente debe tener al menos 3 caracteres')
 			return
@@ -50,6 +75,7 @@ function NewOrderForm({ onAdd }) {
 				return
 			}
 		}
+
 		onAdd({ customer, status, items, date: new Date() })
 		setCustomer('')
 		setStatus('pending')
@@ -71,7 +97,12 @@ function NewOrderForm({ onAdd }) {
 				</label>
 				<label>
 					Estado
-					<select value={status} onChange={(e) => setStatus(e.target.value)}>
+					<select
+						value={status}
+						onChange={(e) =>
+							setStatus(e.target.value as (typeof statusValues)[number])
+						}
+					>
 						{statusValues.map((s) => (
 							<option key={s} value={s}>
 								{s}
@@ -101,7 +132,9 @@ function NewOrderForm({ onAdd }) {
 								min={1}
 								placeholder="Unidades"
 								value={item.quantity}
-								onChange={(e) => updateItem(index, 'quantity', Number(e.target.value))}
+								onChange={(e) =>
+									updateItem(index, 'quantity', Number(e.target.value))
+								}
 								aria-label={`Cantidad del producto ${index + 1}`}
 							/>
 						</div>
@@ -113,15 +146,17 @@ function NewOrderForm({ onAdd }) {
 								step="0.01"
 								placeholder="$ por unidad"
 								value={item.price}
-								onChange={(e) => updateItem(index, 'price', Number(e.target.value))}
+								onChange={(e) =>
+									updateItem(index, 'price', Number(e.target.value))
+								}
 								aria-label={`Precio del producto ${index + 1}`}
 							/>
 						</div>
-                        <div className="field row-button">
-						<button type="button" onClick={() => removeItemRow(index)}>
-							Eliminar
-						</button>
-                        </div>
+						<div className="field row-button">
+							<button type="button" onClick={() => removeItemRow(index)}>
+								Eliminar
+							</button>
+						</div>
 					</div>
 				))}
 				<button type="button" onClick={addItemRow}>
@@ -141,10 +176,4 @@ function NewOrderForm({ onAdd }) {
 	)
 }
 
-NewOrderForm.propTypes = {
-	onAdd: PropTypes.func.isRequired,
-}
-
 export default NewOrderForm
-
-

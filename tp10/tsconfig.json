@@ -1,0 +1,20 @@
+{
+  "compilerOptions": { 
+  "target": "ES2020", 
+  "lib": ["ES2020", "DOM", "DOM.Iterable"], 
+  "jsx": "react-jsx", 
+  "module": "ESNext", 
+  "moduleResolution": "Bundler", 
+  "strict": true, // Fuerza reglas de tipado estricto 
+  "noUncheckedIndexedAccess": true, // Mejora la seguridad con arrays y objetos 
+  "noImplicitAny": true, 
+  "esModuleInterop": true, 
+  "skipLibCheck": true, 
+  "forceConsistentCasingInFileNames": true, 
+  "allowJs": true, // Permite coexistencia con JS para migración gradual 
+  "checkJs": false, 
+  "resolveJsonModule": true, 
+  "isolatedModules": true }, 
+  "include": ["src"] 
+}
+  

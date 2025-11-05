@@ -1,6 +1,18 @@
-import PropTypes from 'prop-types'
+import React from 'react'
 
-function OrderStats({ total, pending, shipped, delivered }) {
+type OrderStatsProps = {
+	total: number
+	pending: number
+	shipped: number
+	delivered: number
+}
+
+const OrderStats: React.FC<OrderStatsProps> = ({
+	total,
+	pending,
+	shipped,
+	delivered,
+}) => {
 	return (
 		<div className="order-stats">
 			<div className="stat">
@@ -23,13 +35,4 @@ function OrderStats({ total, pending, shipped, delivered }) {
 	)
 }
 
-OrderStats.propTypes = {
-	total: PropTypes.number.isRequired,
-	pending: PropTypes.number.isRequired,
-	shipped: PropTypes.number.isRequired,
-	delivered: PropTypes.number.isRequired,
-}
-
 export default OrderStats
-
-

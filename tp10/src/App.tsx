@@ -1,11 +1,11 @@
-import { useEffect, useMemo, useState } from 'react'  
+import { useEffect, useMemo, useState } from 'react'
 import './App.css'
-import OrderList from './components/OrderList'
+import OrderList, { Order } from './components/OrderList'
 import OrderFilter from './components/OrderFilter'
 import OrderStats from './components/OrderStats'
 import NewOrderForm from './components/NewOrderForm'
 
-const initialOrders = [
+const initialOrders: Order[] = [
   {
     id: 1,
     customer: 'Ana López',
@@ -35,18 +35,19 @@ const initialOrders = [
   },
 ]
 
-function App() {
-  const [orders, setOrders] = useState(() => {
+const App: React.FC = () => {
+  const [orders, setOrders] = useState<Order[]>(() => {
     try {
       const raw = localStorage.getItem('orders')
       if (!raw) return initialOrders
       const parsed = JSON.parse(raw)
-      return parsed.map((o) => ({ ...o, date: new Date(o.date) }))
+      return parsed.map((o: Order) => ({ ...o, date: new Date(o.date) }))
     } catch (e) {
       return initialOrders
     }
   })
-  const [filter, setFilter] = useState()
+
+  const [filter, setFilter] = useState<Order['status'] | undefined>()
   const [isFormOpen, setIsFormOpen] = useState(false)
 
   const filteredOrders = useMemo(() => {
@@ -62,7 +63,7 @@ function App() {
     return { total, pending, shipped, delivered }
   }, [orders])
 
-  function handleAddOrder(orderData) {
+  function handleAddOrder(orderData: Omit<Order, 'id'>) {
     setOrders((prev) => {
       const nextId = prev.length ? Math.max(...prev.map((o) => o.id)) + 1 : 1
       return [
@@ -70,7 +71,7 @@ function App() {
         {
           id: nextId,
           ...orderData,
-        }
+        },
       ]
     })
   }
@@ -98,16 +99,21 @@ function App() {
         <OrderFilter filter={filter} onChange={setFilter} />
         <OrderStats {...stats} />
       </div>
-      {/* Botón para móvil, solo visible cuando no se muestra el formulario */}
-      <button className="mobile-add-button" onClick={() => setIsFormOpen(true)} disabled={isFormOpen}>
+
+      {/* Botón móvil */}
+      <button
+        className="mobile-add-button"
+        onClick={() => setIsFormOpen(true)}
+        disabled={isFormOpen}
+      >
         Nuevo pedido
       </button>
+
       <div className="layout">
         <div className="column left">
           <OrderList orders={filteredOrders} />
         </div>
         <div className="column right mobile-hidden">
-          {/* Mostrar formulario solo cuando está cerrado el overlay */}
           {!isFormOpen && <NewOrderForm onAdd={handleAddOrder} />}
         </div>
       </div>
@@ -122,7 +128,12 @@ function App() {
               </button>
             </div>
             <div className="sheet-content">
-              <NewOrderForm onAdd={(data) => { handleAddOrder(data); setIsFormOpen(false) }} />
+              <NewOrderForm
+                onAdd={(data) => {
+                  handleAddOrder(data)
+                  setIsFormOpen(false)
+                }}
+              />
             </div>
           </div>
         </div>
